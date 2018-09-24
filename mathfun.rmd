@@ -1,0 +1,27 @@
+---
+title: "MathFun"
+output: html_notebook
+---
+
+#Distribution of primes
+
+```{r}
+library(RcppAlgos)
+library(ggplot2)
+limit=7 #power of ten to limit how many primes we get
+system.time(primes<-RcppAlgos::primeSieve(10,10^limit))
+system.time(last_digit<-primes %% 10)
+follow_freq<-data.frame()
+for (digit in c(1,3,7,9)){
+  follows<-last_digit[which(last_digit==digit)+1]
+  tmp<-hist(follows,breaks = c(0,2,4,6,8,10),plot = FALSE)
+  freq<-data.frame(p1_digit=rep(digit,5),
+                          p2_digit=tmp$mids,
+                          count=tmp$counts,
+                          dense=tmp$density*2)
+  follow_freq<-rbind(freq,follow_freq)
+  
+}
+
+ggplot(follow_freq,aes(p2_digit,dense))+geom_col()+facet_wrap(.~p1_digit)
+```
