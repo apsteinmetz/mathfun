@@ -4,24 +4,44 @@ output: html_notebook
 ---
 
 #Distribution of primes
-
+First we generate a bunch of prime numbers and get the last digit.
 ```{r}
 library(RcppAlgos)
 library(ggplot2)
-limit=7 #power of ten to limit how many primes we get
+limit=9 #power of ten to limit how many primes we get
 system.time(primes<-RcppAlgos::primeSieve(10,10^limit))
 system.time(last_digit<-primes %% 10)
-follow_freq<-data.frame()
-for (digit in c(1,3,7,9)){
-  follows<-last_digit[which(last_digit==digit)+1]
-  tmp<-hist(follows,breaks = c(0,2,4,6,8,10),plot = FALSE)
-  freq<-data.frame(p1_digit=rep(digit,5),
-                          p2_digit=tmp$mids,
-                          count=tmp$counts,
-                          dense=tmp$density*2)
-  follow_freq<-rbind(freq,follow_freq)
-  
-}
-
-ggplot(follow_freq,aes(p2_digit,dense))+geom_col()+facet_wrap(.~p1_digit)
+#clean up unused memory
+rm(primes)
+gc()
 ```
+That didn't take to long.
+
+Now let's think about the last digit of these primes.  We know it has to be an odd number and not 5 (which would make it divisible by 5, always).  That leaves us with 1,3,7 and 9. We would expect the results to be random, that is, each last digit would appear an equal number of times.  We would be right.
+
+```{r}
+hist(last_digit,breaks=c(0,2,4,6,8,10),density=5,col="blue",border="black",freq = FALSE)
+```
+
+We might also expect that a prime number would have no effect on the number following it.  So, the last digit of a number following any given last digit of the previous number would also be random.  We would be wrong.  This time let's use ggplot for a prettier plot.
+
+
+```{r}
+tmp<-lapply(c(1,3,7,9),
+            function(x)hist(last_digit[which(last_digit==x)+1],
+                            breaks=c(0,2,4,6,8,10)))
+
+follow_freq<-data.frame(p1_digit=rep(c(1,3,7,9),each=5), 
+                    p2_digit=as.factor(rep(c(1,3,5,7,9),4)),
+                    density=unlist(lapply(tmp,function(x)x$density))*2)
+follow_freq <- follow_freq[follow_freq$p2_digit != 5,,]
+           
+ggplot(follow_freq,aes(p2_digit,density))+
+  geom_col()+
+  facet_wrap(~p1_digit)+
+  labs(x="Last Digit of Following Prime",y="Frequency")+
+  scale_y_continuous(labels = scales::percent_format(accuracy=1))
+
+```
+
+
