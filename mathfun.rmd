@@ -8,6 +8,8 @@ First we generate a bunch of prime numbers and get the last digit.
 ```{r}
 library(RcppAlgos)
 library(ggplot2)
+
+#Make this as large as you have the patience for
 limit=9 #power of ten to limit how many primes we get
 system.time(primes<-RcppAlgos::primeSieve(10,10^limit))
 system.time(last_digit<-primes %% 10)
